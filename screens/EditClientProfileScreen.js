@@ -187,9 +187,8 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => onGoBack()}>
-          <Text style={styles.backText}>← Indietro</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Modifica Profilo</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -223,12 +222,12 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
             <TextInput
               style={styles.input}
               value={formData.username}
-              onChangeText={(value) => updateField('username', value)}
+              onChangeText={(value) => updateField('Nome Utente', value)}
               placeholder="Nome utente"
             />
           </View>
 
-          <View style={styles.inputContainer}>
+          {/*<View style={styles.inputContainer}>
             <Text style={styles.label}>Telefono</Text>
             <TextInput
               style={styles.input}
@@ -237,9 +236,9 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
               placeholder="Numero di telefono"
               keyboardType="phone-pad"
             />
-          </View>
+          </View>*/}
 
-          <View style={styles.inputContainer}>
+          {/*<View style={styles.inputContainer}>
             <Text style={styles.label}>Città</Text>
             <TextInput
               style={styles.input}
@@ -247,9 +246,9 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
               onChangeText={(value) => updateField('citta', value)}
               placeholder="La tua città"
             />
-          </View>
+          </View>*/}
 
-          <View style={styles.inputContainer}>
+          {/*<View style={styles.inputContainer}>
             <Text style={styles.label}>Provincia</Text>
             <TextInput
               style={styles.input}
@@ -257,10 +256,10 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
               onChangeText={(value) => updateField('provincia', value)}
               placeholder="La tua provincia"
             />
-          </View>
+          </View>*/}
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-            <Text style={styles.saveButtonText}>💾 Salva Modifiche</Text>
+            <Text style={styles.saveButtonText}>Salva Modifiche</Text>
           </TouchableOpacity>
         </View>
 
@@ -285,7 +284,7 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
                 onPress={() => setShowEmailSection(!showEmailSection)}
               >
                 <Text style={styles.editButtonText}>
-                  {showEmailSection ? '✖️' : '✏️'}
+                  {showEmailSection ? 'Chiudi' : 'Modifica'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -305,7 +304,7 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
               </View>
 
               <TouchableOpacity style={styles.updateButton} onPress={handleUpdateEmail}>
-                <Text style={styles.updateButtonText}>📧 Aggiorna Email</Text>
+                <Text style={styles.updateButtonText}>Aggiorna Email</Text>
               </TouchableOpacity>
             </>
           )}
@@ -320,7 +319,7 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
             onPress={() => setShowPasswordSection(!showPasswordSection)}
           >
             <Text style={styles.toggleButtonText}>
-              🔑 {showPasswordSection ? 'Nascondi' : 'Cambia Password'}
+              {showPasswordSection ? 'Nascondi' : 'Cambia Password'}
             </Text>
           </TouchableOpacity>
 
@@ -360,13 +359,13 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
               </View>
 
               <TouchableOpacity style={styles.updateButton} onPress={handleUpdatePassword}>
-                <Text style={styles.updateButtonText}>🔐 Cambia Password</Text>
+                <Text style={styles.updateButtonText}>Cambia Password</Text>
               </TouchableOpacity>
             </>
           )}
 
           <TouchableOpacity style={styles.resetButton} onPress={handlePasswordReset}>
-            <Text style={styles.resetButtonText}>📩 Invia Email Reset Password</Text>
+            <Text style={styles.resetButtonText}>Invia Email Reset Password</Text>
           </TouchableOpacity>
         </View>
 
@@ -379,13 +378,13 @@ export default function EditClientProfileScreen({ userData, onGoBack }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff',
   },
   loadingText: {
     marginTop: 12,
@@ -395,50 +394,64 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#00BCD4',
+    backgroundColor: 'transparent',
     paddingTop: 50,
   },
   backButton: {
-    padding: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.78)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
   },
   backText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    color: '#0f172a',
+    fontSize: 20,
+    fontWeight: '600',
   },
   headerTitle: {
-    color: '#fff',
+    color: '#0f172a',
     fontSize: 18,
     fontWeight: 'bold',
   },
   placeholder: {
-    width: 60,
+    width: 0,
   },
   scrollView: {
     flex: 1,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     margin: 16,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 5,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0f172a',
     marginBottom: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#00BCD4',
-    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 188, 212, 0.3)',
+    paddingBottom: 12,
   },
   inputContainer: {
     marginBottom: 20,
@@ -450,14 +463,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    backgroundColor: 'rgba(248, 248, 248, 0.6)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.2)',
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
+    color: '#0f172a',
   },
   emailRow: {
     flexDirection: 'row',
@@ -468,61 +481,78 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   editButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.3)',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.5)',
   },
   editButtonText: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#00BCD4',
+    fontWeight: '600',
   },
   saveButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.35)',
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.7)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   saveButtonText: {
-    color: '#fff',
+    color: '#00BCD4',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   toggleButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(248, 248, 248, 0.6)',
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 15,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.2)',
   },
   toggleButtonText: {
-    color: '#333',
+    color: '#0f172a',
     fontSize: 16,
     fontWeight: '600',
   },
   updateButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(76, 175, 80, 0.3)',
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(76, 175, 80, 0.5)',
   },
   updateButtonText: {
-    color: '#fff',
+    color: '#4CAF50',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   resetButton: {
-    backgroundColor: '#FF9800',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 152, 0, 0.3)',
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 15,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 152, 0, 0.5)',
   },
   resetButtonText: {
-    color: '#fff',
+    color: '#FF9800',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   bottomSpacing: {
     height: 30,

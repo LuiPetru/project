@@ -29,6 +29,7 @@ import PrenotazioniScreen from './screens/PrenotazioniScreen';
 import GiftScreen from './screens/GiftScreen';
 import AccountScreen from './screens/AccountScreen';
 import BarberProfileScreen from './screens/BarberProfileScreen';
+import ShopScreen from './screens/ShopScreen';
 
 // Funzione per renderizzare la schermata attiva
 const renderActiveScreen = (activeTab, userRole, userData, handleLogout, isLoggedIn, checkUserRole, setActiveTab, setViewingProfile, viewingProfile, setSearchHashtag, searchHashtag, editingProfile, navigate, goBackFromEdit) => {
@@ -83,13 +84,15 @@ const renderActiveScreen = (activeTab, userRole, userData, handleLogout, isLogge
       return <HomeScreen onViewProfile={handleViewProfile} onHashtagPress={handleHashtagPress} />;
     case 'like':
       return <LikeScreen />;
-    case 'search':
+    /*case 'search':
       return (
         <SearchScreen 
           onViewProfile={handleViewProfile} 
           initialHashtag={searchHashtag}
         />
-      );
+      );*/
+    case 'shop':
+      return <ShopScreen />;
     case 'prenotazioni':
       return <PrenotazioniScreen />;
     case 'gift':

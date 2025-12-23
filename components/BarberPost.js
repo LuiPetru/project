@@ -65,6 +65,12 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
   const [isLiked, setIsLiked] = useState(barber.isLiked || false);
   const [likesCount, setLikesCount] = useState(barber.likes || 0);
   const [currentUser, setCurrentUser] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  const fallbackColors = ['#A8D8EA', '#AA96DA', '#F38181', '#4ECDC4', '#FFE66D', '#95E1D3', '#00BCD4', '#FF6B6B'];
+  const fallbackColor = fallbackColors[
+    Math.abs((barber?.id || '0').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % fallbackColors.length
+  ];
   
   // Animazioni
   const likeAnimation = useRef(new Animated.Value(0)).current;
@@ -98,12 +104,10 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
 
   const handleProfilePress = () => {
     console.log('BarberPost: handleProfilePress called');
-    console.log('BarberPost: currentUser:', currentUser);
     console.log('BarberPost: barber object:', barber);
     console.log('BarberPost: onViewProfile function:', typeof onViewProfile);
     
-    // Solo i clienti (role = 0) possono vedere i profili dei parrucchieri
-    if (currentUser && currentUser.role === 0 && onViewProfile) {
+    if (onViewProfile) {
       // Usa il nome del salone come identificatore unico
       const barberName = barber.salonName || barber.nomeSalone || barber.name || barber.barberName;
       console.log('BarberPost: calling onViewProfile with barberName:', barberName);
@@ -113,9 +117,7 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
         console.log('BarberPost: No valid barber name found');
       }
     } else {
-      console.log('BarberPost: conditions not met for navigation');
-      console.log('BarberPost: currentUser role:', currentUser?.role);
-      console.log('BarberPost: onViewProfile exists:', !!onViewProfile);
+      console.log('BarberPost: onViewProfile not available');
     }
   };
   
@@ -339,6 +341,13 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
     }
   };
 
+  // Avatar helpers
+  const avatarUri = typeof barber?.avatar === 'string' && barber.avatar.length > 0 ? barber.avatar : null;
+  const placeholderInitial = (barber?.salonName || barber?.nomeSalone || barber?.barberName || 'S')
+    .toString()
+    .charAt(0)
+    .toUpperCase();
+
   return (
     <View style={styles.postCard}>
       {/* Header del post */}
@@ -346,16 +355,19 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
         <TouchableOpacity 
           style={styles.barberInfo}
           onPress={handleProfilePress}
-          disabled={!currentUser || currentUser.role !== 0 || !onViewProfile}
+          disabled={!onViewProfile}
         >
-          <Image source={{ uri: barber.avatar }} style={styles.barberAvatar} />
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.barberAvatar} />
+          ) : (
+            <View style={styles.barberAvatarPlaceholder}>
+              <Text style={styles.barberAvatarPlaceholderText}>{placeholderInitial}</Text>
+            </View>
+          )}
           <View style={styles.barberDetails}>
             <Text style={styles.salonName}>{barber.salonName}</Text>
             <Text style={styles.barberName}>{barber.barberName}</Text>
           </View>
-          {currentUser && currentUser.role === 0 && (
-            <Text style={styles.profileHint}>👆</Text>
-          )}
         </TouchableOpacity>
         <TouchableOpacity>
           <Text style={styles.moreDotsIcon}>⋯</Text>
@@ -369,7 +381,17 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
           onStartShouldSetResponder={() => true}
           onResponderGrant={handleImagePress}
         >
-          <Image source={{ uri: barber.postImage }} style={styles.workImage} />
+          {imageError || !barber.postImage ? (
+            <View style={[styles.fallbackImage, { backgroundColor: fallbackColor }]}>
+              <Text style={styles.fallbackEmoji}>✨</Text>
+            </View>
+          ) : (
+            <Image 
+              source={{ uri: barber.postImage }} 
+              style={styles.workImage} 
+              onError={() => setImageError(true)}
+            />
+          )}
         </View>
         
         {/* Cuore animato per doppio tap - Instagram Style */}
@@ -439,17 +461,9 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
         </View>
       </View>
 
-      {/* Caption/Descrizione con contatore likes */}
+      {/* Likes only - descrizione rimossa */}
       <View style={styles.captionContainer}>
         <Text style={styles.likesCount}>{likesCount} Mi piace</Text>
-        <View style={styles.captionRow}>
-          <Text style={styles.usernameInCaption}>{barber.salonName}</Text>
-          <Text style={styles.captionSpacer}> </Text>
-          <ClickableCaption 
-            caption={barber.caption} 
-            onHashtagPress={onHashtagPress}
-          />
-        </View>
       </View>
     </View>
   );
@@ -458,8 +472,8 @@ const BarberPost = ({ barber, onViewProfile, onHashtagPress }) => {
 const styles = StyleSheet.create({
   // Post Card Styles
   postCard: {
-    backgroundColor: '#fff',
-    marginBottom: 16,
+    backgroundColor: 'transparent',
+    marginBottom: 0,
   },
   postHeader: {
     flexDirection: 'row',
@@ -477,6 +491,20 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     marginRight: 12,
+  },
+  barberAvatarPlaceholder: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 12,
+    backgroundColor: '#00BCD4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  barberAvatarPlaceholderText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   barberDetails: {
     flex: 1,
@@ -508,6 +536,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  fallbackImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fallbackEmoji: {
+    fontSize: 48,
+    color: '#fff',
   },
   imagePress: {
     width: '100%',

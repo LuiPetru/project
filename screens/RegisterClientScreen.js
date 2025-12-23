@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,31 +7,21 @@ import {
   StyleSheet, 
   SafeAreaView,
   ScrollView,
-  Image,
   Alert
 } from 'react-native';
 import { registerClient } from '../services/authService';
 
-export default function RegisterClientScreen({ onGoToLogin }) {
-  const [currentStep, setCurrentStep] = useState(1);
+export default function RegisterClientScreen({ onGoToLogin, navigation }) {
   const [formData, setFormData] = useState({
-    // Step 1 - Credenziali
     email: '',
     password: '',
     confirmPassword: '',
-    
-    // Step 2 - Dati personali
-    sesso: '',
-    eta: '',
-    via: '',
     nomeUtente: '',
-    
-    // Step 3 - Preferenze taglio
-    preferenzaTaglio: [], // Array per selezione multipla
-    
-    // Step 4 - Raggio
-    raggio: 5, // Default 5km
+    sesso: '',
+    preferenzaTaglio: [],
   });
+
+  const scrollViewRef = useRef(null);
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -46,49 +36,74 @@ export default function RegisterClientScreen({ onGoToLogin }) {
     }));
   };
 
-  const validateStep = (step) => {
-    switch (step) {
-      case 1:
-        return formData.email && formData.password && formData.confirmPassword;
-      case 2:
-        return formData.sesso && formData.eta && formData.via && formData.nomeUtente;
-      case 3:
-        return formData.preferenzaTaglio.length > 0;
-      case 4:
-        return formData.raggio;
-      default:
-        return false;
+  const tagliOptions = [
+    { 
+      id: 'classico', 
+      name: 'Classico', 
+      description: 'Taglio tradizionale e ordinato',
+      emoji: '✂️'
+    },
+    { 
+      id: 'fade', 
+      name: 'Fade', 
+      description: 'Sfumatura graduale',
+      emoji: '✨'
+    },
+    { 
+      id: 'rasati', 
+      name: 'Rasati', 
+      description: 'Taglio molto corto',
+      emoji: '💈'
+    },
+    { 
+      id: 'moderni', 
+      name: 'Moderni', 
+      description: 'Stili attuali e trendy',
+      emoji: '🚀'
+    },
+    { 
+      id: 'barba', 
+      name: 'Barba', 
+      description: 'Cura e styling barba',
+      emoji: '🧔'
+    },
+    { 
+      id: 'baffi', 
+      name: 'Baffi', 
+      description: 'Styling baffi',
+      emoji: '👨‍💼'
     }
-  };
-
-  const canProceed = validateStep(currentStep);
-
-  const nextStep = () => {
-    if (currentStep < 4 && validateStep(currentStep)) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+  ];
 
   const handleRegister = async () => {
-    if (!validateStep(4)) {
-      Alert.alert('Errore', 'Completa tutti i campi per continuare');
+    // Validazione: almeno uno tra email, nomeUtente, sesso deve essere compilato
+    if (!formData.email && !formData.nomeUtente && !formData.sesso) {
+      Alert.alert('Errore', 'Compila almeno email, nome utente o genere');
       return;
     }
     
-    // Validazione password
+    // Validazione password: se inserita, deve essere confermata
+    if (formData.password && !formData.confirmPassword) {
+      Alert.alert('Errore', 'Conferma la password');
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       Alert.alert('Errore', 'Le password non coincidono');
       return;
     }
     
     try {
-      await registerClient(formData);
+      // Costruisci l'oggetto SOLO con i campi che hanno valore
+      const cleanedData = {};
+      
+      if (formData.email) cleanedData.email = formData.email;
+      if (formData.password) cleanedData.password = formData.password;
+      if (formData.nomeUtente) cleanedData.nomeUtente = formData.nomeUtente;
+      if (formData.sesso) cleanedData.sesso = formData.sesso;
+      if (formData.preferenzaTaglio.length > 0) cleanedData.preferenzaTaglio = formData.preferenzaTaglio;
+      
+      await registerClient(cleanedData);
       Alert.alert('Successo', 'Registrazione completata!');
       // Firebase observer gestirà automaticamente lo stato
     } catch (error) {
@@ -96,245 +111,146 @@ export default function RegisterClientScreen({ onGoToLogin }) {
     }
   };
 
-  const tagliOptions = [
-    { 
-      id: 'classico', 
-      name: 'Classico', 
-      image: '👔',
-      description: 'Taglio tradizionale e ordinato'
-    },
-    { 
-      id: 'fade', 
-      name: 'Fade', 
-      image: '🌅',
-      description: 'Sfumatura graduale'
-    },
-    { 
-      id: 'rasati', 
-      name: 'Rasati', 
-      image: '⚡',
-      description: 'Taglio molto corto'
-    },
-    { 
-      id: 'moderni', 
-      name: 'Moderni', 
-      image: '✨',
-      description: 'Stili attuali e trendy'
-    }
-  ];
 
-  const renderStep1 = () => (
-    <View>
-      <Text style={styles.stepTitle}>Credenziali di accesso</Text>
-      
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={formData.email}
-          onChangeText={(value) => updateField('email', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={formData.password}
-          onChangeText={(value) => updateField('password', value)}
-          secureTextEntry
-          autoCompleteType="off"
-          textContentType="none"
-          autoCorrect={false}
-          autoCapitalize="none"
-          keyboardType="default"
-          passwordRules=""
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Conferma Password"
-          value={formData.confirmPassword}
-          onChangeText={(value) => updateField('confirmPassword', value)}
-          secureTextEntry
-        />
-      </View>
-    </View>
-  );
-
-  const renderStep2 = () => (
-    <View>
-      <Text style={styles.stepTitle}>Dati personali</Text>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Sesso</Text>
-        <View style={styles.genderContainer}>
-          <TouchableOpacity 
-            style={[styles.genderButton, formData.sesso === 'M' && styles.genderButtonActive]}
-            onPress={() => updateField('sesso', 'M')}
-          >
-            <Text style={[styles.genderText, formData.sesso === 'M' && styles.genderTextActive]}>Maschio</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.genderButton, formData.sesso === 'F' && styles.genderButtonActive]}
-            onPress={() => updateField('sesso', 'F')}
-          >
-            <Text style={[styles.genderText, formData.sesso === 'F' && styles.genderTextActive]}>Femmina</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Età"
-          value={formData.eta}
-          onChangeText={(value) => updateField('eta', value)}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Via (indirizzo)"
-          value={formData.via}
-          onChangeText={(value) => updateField('via', value)}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Nome utente"
-          value={formData.nomeUtente}
-          onChangeText={(value) => updateField('nomeUtente', value)}
-        />
-      </View>
-    </View>
-  );
-
-  const renderStep3 = () => (
-    <View>
-      <Text style={styles.stepTitle}>Preferenze taglio</Text>
-      <Text style={styles.subtitle}>Scegli i tuoi stili preferiti (selezione multipla)</Text>
-      
-      <View style={styles.taglioGrid}>
-        {tagliOptions.map((taglio) => (
-          <TouchableOpacity
-            key={taglio.id}
-            style={[
-              styles.taglioCard,
-              formData.preferenzaTaglio.includes(taglio.id) && styles.taglioCardActive
-            ]}
-            onPress={() => toggleTaglio(taglio.id)}
-          >
-            <Text style={styles.taglioEmoji}>{taglio.image}</Text>
-            <Text style={styles.taglioName}>{taglio.name}</Text>
-            <Text style={styles.taglioDescription}>{taglio.description}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderStep4 = () => (
-    <View>
-      <Text style={styles.stepTitle}>Raggio di ricerca</Text>
-      <Text style={styles.subtitle}>Fino a che distanza cercare parrucchieri?</Text>
-      
-      <View style={styles.raggioContainer}>
-        <Text style={styles.raggioLabel}>Raggio: {formData.raggio} km</Text>
-        <View style={styles.raggioButtons}>
-          {[1, 3, 5, 7, 10].map((km) => (
-            <TouchableOpacity
-              key={km}
-              style={[
-                styles.raggioButton,
-                formData.raggio === km && styles.raggioButtonActive
-              ]}
-              onPress={() => updateField('raggio', km)}
-            >
-              <Text style={[
-                styles.raggioButtonText,
-                formData.raggio === km && styles.raggioButtonTextActive
-              ]}>
-                {km} km
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} ref={scrollViewRef}>
         <View style={styles.content}>
-          <Text style={styles.title}>aircut</Text>
-
-          {/* Render current step */}
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
-
-          {/* Navigation buttons */}
-          <View style={styles.buttonContainer}>
-            {currentStep > 1 && (
-              <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-                <Text style={styles.backButtonText}>Indietro</Text>
-              </TouchableOpacity>
-            )}
-            
-            {currentStep < 4 ? (
-              <TouchableOpacity 
-                style={[
-                  styles.nextButton, 
-                  !canProceed && styles.nextButtonDisabled
-                ]} 
-                onPress={nextStep}
-                disabled={!canProceed}
-              >
-                <Text style={[
-                  styles.nextButtonText,
-                  !canProceed && styles.nextButtonTextDisabled
-                ]}>
-                  Avanti
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity 
-                style={[
-                  styles.registerButton,
-                  !canProceed && styles.registerButtonDisabled
-                ]} 
-                onPress={handleRegister}
-                disabled={!canProceed}
-              >
-                <Text style={[
-                  styles.registerButtonText,
-                  !canProceed && styles.registerButtonTextDisabled
-                ]}>
-                  Completa Registrazione
-                </Text>
-              </TouchableOpacity>
-            )}
+          <View style={styles.headerRow}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => {
+                if (navigation && navigation.goBack) {
+                  navigation.goBack();
+                } else if (onGoToLogin) {
+                  onGoToLogin();
+                }
+              }}
+            >
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>aircut</Text>
+            <View style={{ width: 44 }} />
           </View>
 
-          {currentStep === 1 && (
-            <View style={styles.loginSection}>
-              <Text style={styles.loginText}>Hai già un account?</Text>
-              <TouchableOpacity onPress={onGoToLogin}>
-                <Text style={styles.loginLink}>Accedi</Text>
-              </TouchableOpacity>
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionTitle}>Credenziali</Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={formData.email}
+                onChangeText={(value) => updateField('email', value)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
-          )}
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={formData.password}
+                onChangeText={(value) => updateField('password', value)}
+                secureTextEntry
+                autoCompleteType="off"
+                textContentType="none"
+                autoCorrect={false}
+                autoCapitalize="none"
+                keyboardType="default"
+                passwordRules=""
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Conferma Password"
+                value={formData.confirmPassword}
+                onChangeText={(value) => updateField('confirmPassword', value)}
+                secureTextEntry
+                autoCompleteType="off"
+                textContentType="none"
+                autoCorrect={false}
+                autoCapitalize="none"
+                keyboardType="default"
+                passwordRules=""
+              />
+            </View>
+          </View>
+
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionTitle}>Dati Personali</Text>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome utente"
+                value={formData.nomeUtente}
+                onChangeText={(value) => updateField('nomeUtente', value)}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Genere</Text>
+              <View style={styles.genderContainer}>
+                <TouchableOpacity 
+                  style={[styles.genderButton, formData.sesso === 'M' && styles.genderButtonActive]}
+                  onPress={() => updateField('sesso', 'M')}
+                >
+                  <Text style={[styles.genderText, formData.sesso === 'M' && styles.genderTextActive]}>Uomo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.genderButton, formData.sesso === 'F' && styles.genderButtonActive]}
+                  onPress={() => updateField('sesso', 'F')}
+                >
+                  <Text style={[styles.genderText, formData.sesso === 'F' && styles.genderTextActive]}>Donna</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.genderButton, formData.sesso === 'ALTRO' && styles.genderButtonActive]}
+                  onPress={() => updateField('sesso', 'ALTRO')}
+                >
+                  <Text style={[styles.genderText, formData.sesso === 'ALTRO' && styles.genderTextActive]}>Altro</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+          </View>
+
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionTitle}>Preferenze Taglio</Text>
+
+            <Text style={styles.subtitle}>Scegli i tuoi stili preferiti (selezione multipla)</Text>
+            <View style={styles.taglioGrid}>
+              {tagliOptions.map((taglio) => (
+                <TouchableOpacity
+                  key={taglio.id}
+                  style={[
+                    styles.taglioCard,
+                    formData.preferenzaTaglio.includes(taglio.id) && styles.taglioCardActive
+                  ]}
+                  onPress={() => toggleTaglio(taglio.id)}
+                >
+                  <Text style={styles.taglioEmoji}>{taglio.emoji}</Text>
+                  <Text style={styles.taglioName}>{taglio.name}</Text>
+                  <Text style={styles.taglioDescription}>{taglio.description}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            <Text style={styles.registerButtonText}>Registrati</Text>
+          </TouchableOpacity>
+
+          <View style={styles.loginSection}>
+            <Text style={styles.loginText}>Hai già un account?</Text>
+            <TouchableOpacity onPress={onGoToLogin}>
+              <Text style={styles.loginLink}>Accedi</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -349,6 +265,33 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
+    marginBottom: 20,
+  },
+  backButtonText: {
+    fontSize: 20,
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
   content: {
     paddingHorizontal: 30,
     paddingVertical: 40,
@@ -358,196 +301,161 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#00BCD4',
     textAlign: 'center',
-    marginBottom: 30,
+    flex: 1,
   },
-  stepTitle: {
-    fontSize: 22,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#0f172a',
+    marginBottom: 15,
+    marginTop: 20,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 25,
-  },
-  inputContainer: {
+    fontSize: 14,
+    color: '#334155',
     marginBottom: 20,
+    textAlign: 'center',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0f172a',
     marginBottom: 10,
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
   input: {
     height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.2)',
+    borderRadius: 14,
     paddingHorizontal: 15,
     fontSize: 16,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: 'rgba(248, 248, 248, 0.6)',
+    color: '#0f172a',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   genderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 10,
   },
   genderButton: {
     flex: 1,
     height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.2)',
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 5,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: 'rgba(248, 248, 248, 0.6)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   genderButtonActive: {
-    backgroundColor: '#00BCD4',
-    borderColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.15)',
+    borderColor: 'rgba(0, 188, 212, 0.5)',
   },
   genderText: {
     fontSize: 16,
-    color: '#666',
+    color: '#334155',
+    fontWeight: '500',
   },
   genderTextActive: {
-    color: 'white',
+    color: '#00BCD4',
     fontWeight: 'bold',
   },
   taglioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
   taglioCard: {
     width: '48%',
-    backgroundColor: '#F8F8F8',
-    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    borderRadius: 16,
     padding: 20,
     marginBottom: 15,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
   },
   taglioCardActive: {
-    backgroundColor: '#E8F8F5',
-    borderColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.15)',
+    borderColor: 'rgba(0, 188, 212, 0.5)',
   },
   taglioEmoji: {
-    fontSize: 40,
-    marginBottom: 10,
+    fontSize: 35,
+    marginBottom: 8,
   },
   taglioName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0f172a',
     marginBottom: 5,
   },
   taglioDescription: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 11,
+    color: '#334155',
     textAlign: 'center',
   },
-  raggioContainer: {
-    alignItems: 'center',
-  },
-  raggioLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#00BCD4',
+  sectionBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    borderRadius: 24,
+    padding: 20,
     marginBottom: 20,
-  },
-  raggioButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  raggioButton: {
-    backgroundColor: '#F8F8F8',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    margin: 5,
-  },
-  raggioButtonActive: {
-    backgroundColor: '#00BCD4',
-    borderColor: '#00BCD4',
-  },
-  raggioButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  raggioButtonTextActive: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 30,
-  },
-  backButton: {
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 10,
-  },
-  backButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  nextButton: {
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 10,
-  },
-  nextButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  nextButtonTextDisabled: {
-    color: '#999999',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
   },
   registerButton: {
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 10,
-    flex: 1,
+    backgroundColor: 'rgba(0, 188, 212, 0.35)',
+    height: 50,
+    borderRadius: 14,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  registerButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    marginTop: 30,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.7)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   registerButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#00BCD4',
+    fontSize: 18,
     fontWeight: 'bold',
-  },
-  registerButtonTextDisabled: {
-    color: '#999999',
   },
   loginSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 30,
+    marginBottom: 20,
   },
   loginText: {
     fontSize: 16,
-    color: '#666',
+    color: '#334155',
   },
   loginLink: {
     fontSize: 16,

@@ -67,11 +67,11 @@ const SearchScreen = ({ onHashtagPress, onUserPress, onViewProfile }) => {
     <View style={styles.emptyContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.emptyContent}>
-          <Text style={styles.emptyIcon}>🔍</Text>
+          {/*<Text style={styles.emptyIcon}>🔍</Text>*/}
           <Text style={styles.emptyTitle}>Scopri il mondo del beauty</Text>
-          <Text style={styles.emptyDescription}>
+          {/*<Text style={styles.emptyDescription}>
             Cerca hashtag per trovare ispirazione o trova barbieri e saloni nella tua zona
-          </Text>
+          </Text>*/}
         </View>
 
         {recentSearches.length > 0 && (
@@ -130,7 +130,7 @@ const SearchScreen = ({ onHashtagPress, onUserPress, onViewProfile }) => {
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyContent}>
-            <Text style={styles.emptyIcon}>😕</Text>
+            <Text style={styles.emptyIcon}></Text>
             <Text style={styles.emptyTitle}>Nessun risultato</Text>
             <Text style={styles.emptyDescription}>
               {isHashtagSearch 
@@ -144,14 +144,13 @@ const SearchScreen = ({ onHashtagPress, onUserPress, onViewProfile }) => {
 
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header risultati */}
-        <View style={styles.resultsHeader}>
-          <Text style={styles.resultsTitle}>
-            {isHashtagSearch ? `Post con ${searchText}` : 'Risultati ricerca'}
-          </Text>
-          <Text style={styles.resultsCount}>
-            {totalResults} risultat{totalResults === 1 ? 'o' : 'i'}
-          </Text>
+        {/* Badge conteggio risultati */}
+        <View style={styles.resultsBadgeContainer}>
+          <View style={styles.resultsBadge}>
+            <Text style={styles.resultsBadgeText}>
+              {totalResults} risultat{totalResults === 1 ? 'o' : 'i'}
+            </Text>
+          </View>
         </View>
 
         {/* Post (per hashtag) */}
@@ -170,9 +169,6 @@ const SearchScreen = ({ onHashtagPress, onUserPress, onViewProfile }) => {
         {/* Utenti (per ricerca saloni) */}
         {users.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {posts.length > 0 ? 'Barbieri e saloni' : 'Risultati'}
-            </Text>
             <FlatList
               data={users}
               renderItem={({ item }) => (
@@ -234,7 +230,7 @@ const SearchScreen = ({ onHashtagPress, onUserPress, onViewProfile }) => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f7f9fc',
   },
   container: {
     flex: 1,
@@ -242,12 +238,15 @@ const styles = StyleSheet.create({
   
   // Search Header
   searchHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.78)',
     paddingHorizontal: 16,
     paddingTop: 50,
     paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
+    borderBottomWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -325,23 +324,28 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   
-  // Results Header
-  resultsHeader: {
+  // Results Badge
+  resultsBadgeContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#f8f9fa',
+    paddingVertical: 16,
+    alignItems: 'flex-start',
   },
-  resultsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#262626',
-    marginBottom: 4,
+  resultsBadge: {
+    backgroundColor: 'rgba(255,255,255,0.78)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
   },
-  resultsCount: {
+  resultsBadgeText: {
     fontSize: 14,
-    color: '#8e8e8e',
+    fontWeight: '600',
+    color: '#334155',
   },
   
   // Sections

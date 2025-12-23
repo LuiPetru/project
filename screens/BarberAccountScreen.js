@@ -25,11 +25,15 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
   const [newService, setNewService] = useState({ name: '', price: '' });
   const [editingService, setEditingService] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
+  const [localProfileUri, setLocalProfileUri] = useState(null);
 
   useEffect(() => {
     console.log('BarberAccountScreen received userData:', propUserData);
     if (propUserData) {
       setUserData(propUserData);
+      setCurrentUser(auth.currentUser || null);
       setLoading(false);
     } else {
       loadUserData();
@@ -89,7 +93,8 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
         }
       }
     } catch (error) {
-      Alert.alert('Errore', 'Impossibile caricare le foto');
+      console.error('handleAddImages error:', error);
+      Alert.alert('Errore', 'Impossibile caricare le foto: ' + (error?.message || 'Errore sconosciuto'));
     } finally {
       setUploading(false);
     }
@@ -132,7 +137,8 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
         }
       }
     } catch (error) {
-      Alert.alert('Errore', 'Impossibile caricare i video');
+      console.error('handleAddVideos error:', error);
+      Alert.alert('Errore', 'Impossibile caricare i video: ' + (error?.message || 'Errore sconosciuto'));
     } finally {
       setUploading(false);
     }
@@ -319,6 +325,64 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
     setShowPriceModal(false);
   };
 
+  const goToEditProfile = () => {
+    if (navigate) {
+      navigate('EditBarberProfile', {
+        userId: userData?.id || auth.currentUser?.uid,
+        currentUserData: userData,
+      });
+    } else {
+      Alert.alert('Navigazione', 'Modifica profilo non disponibile.');
+    }
+  };
+  
+  const toggleMenu = () => setMenuOpen(prev => !prev);
+  const closeMenu = () => setMenuOpen(false);
+
+  const handleProfileImageUpload = async () => {
+    try {
+      const images = await pickImages(false); // Single image
+      if (images && images.length > 0 && currentUser) {
+        setUploadingProfileImage(true);
+        // Anteprima immediata locale
+        const picked = images[0];
+        if (picked?.uri) {
+          setLocalProfileUri(picked.uri);
+        }
+        
+        const uploadedImages = await uploadMultipleFiles(
+          [picked], 
+          currentUser.uid, 
+          'profile',
+          (current, total) => {
+            console.log(`Upload immagine profilo ${current}/${total}`);
+          }
+        );
+
+        if (uploadedImages.length > 0) {
+          const imageUrl = uploadedImages[0].url;
+          
+          await updateBarberPortfolio(currentUser.uid, {
+            profileImage: imageUrl
+          });
+          
+          setUserData(prev => ({
+            ...prev,
+            profileImage: imageUrl
+          }));
+          setLocalProfileUri(null);
+          
+          Alert.alert('Successo', 'Immagine profilo aggiornata!');
+        }
+      }
+    } catch (error) {
+      console.error('handleProfileImageUpload error:', error);
+      Alert.alert('Errore', 'Impossibile caricare l\'immagine profilo: ' + (error?.message || 'Errore sconosciuto'));
+    } finally {
+      setUploadingProfileImage(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -336,9 +400,60 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
           
           {/* Header Account */}
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>Benvenuto! 💼</Text>
-            <Text style={styles.salonName}>{userData?.nomeSalone}</Text>
-            <Text style={styles.roleText}>Account Parrucchiere</Text>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={styles.menuButton}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            >
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+            </TouchableOpacity>
+            {menuOpen && (
+              <>
+                <TouchableOpacity style={styles.headerOverlay} onPress={closeMenu} />
+                <View style={styles.menuContainer}>
+                  <TouchableOpacity style={styles.menuItem} onPress={() => { closeMenu(); goToEditProfile(); }}>
+                    <Text style={styles.menuItemText}>Modifica profilo</Text>
+                  </TouchableOpacity>
+                  <View style={styles.menuDivider} />
+                  <TouchableOpacity style={styles.menuItem} onPress={() => { closeMenu(); handleProfileImageUpload(); }}>
+                    <Text style={styles.menuItemText}>Cambia immagine profilo</Text>
+                  </TouchableOpacity>
+                  {/*<View style={styles.menuDivider} />
+                  <TouchableOpacity style={styles.menuItem} onPress={() => { closeMenu(); handleLogout(); }}>
+                    <Text style={styles.menuItemText}>Disconnetti</Text>
+                  </TouchableOpacity>*/}
+                </View>
+              </>
+            )}
+            <View style={styles.headerContent}>
+              {/* Profile image on the left with + to upload */}
+              <TouchableOpacity
+                style={styles.profileImageContainer}
+                onPress={handleProfileImageUpload}
+                disabled={uploadingProfileImage}
+              >
+                {(localProfileUri || userData?.profileImage) ? (
+                  <Image source={{ uri: localProfileUri || userData.profileImage }} style={styles.profileImage} />
+                ) : (
+                  <View style={styles.profileImagePlaceholder}>
+                    <Text style={styles.profileImagePlaceholderText}>
+                      {userData?.nomeSalone?.charAt(0) || 'S'}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.addImageButton}>
+                  <Text style={styles.addImageButtonText}>{uploadingProfileImage ? '··' : '+'}</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Name and role to the right */}
+              <View style={styles.salonInfo}>
+                <Text style={styles.salonName}>{userData?.nomeSalone}</Text>
+                <Text style={styles.roleText}>Hair Artist</Text>
+              </View>
+            </View>
           </View>
 
           {/* Dati Salone */}
@@ -373,7 +488,7 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
             )}
           </View>
 
-          {/* Staff */}
+          {/* Staff 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Il tuo team</Text>
             
@@ -381,7 +496,7 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
               <Text style={styles.infoLabel}>Dipendenti:</Text>
             </View>
             <Text style={styles.staffText}>{userData?.nomiDipendenti || 'Nessun dipendente inserito'}</Text>
-          </View>
+          </View>*/}
 
           {/* Specializzazioni */}
           <View style={styles.section}>
@@ -396,45 +511,20 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
             </View>
           </View>
 
-          {/* Gestione Business */}
+          {/* Gestione Business
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Gestione business</Text>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📅 Gestisci prenotazioni</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>👥 Clienti del salone</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📊 Statistiche</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>💰 Gestisci prezzi</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => navigate('EditBarberProfile', { 
-                userId: userData?.id || auth.currentUser?.uid,
-                currentUserData: userData 
-              })}
-            >
-              <Text style={styles.actionButtonText}>⚙️ Modifica profilo salone</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>⚙️ Modifica profilo salone</Text>
           </View>
+          */}
 
           {/* Promozione */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Il tuo portfolio</Text>
+            <Text style={styles.sectionTitle}>Posts {userData?.portfolioImages?.length || 0} </Text> 
             
             {/* Foto Portfolio */}
             <View style={styles.portfolioSection}>
               <View style={styles.portfolioHeader}>
-                <Text style={styles.portfolioTitle}>📸 Foto dei tuoi lavori ({userData?.portfolioImages?.length || 0})</Text>
+                {/*<Text style={styles.portfolioTitle}> ({userData?.portfolioImages?.length || 0})</Text>*/}
                 <TouchableOpacity 
                   style={[styles.addButton, uploading && styles.addButtonDisabled]} 
                   onPress={handleAddImages}
@@ -454,7 +544,10 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={({ item, index }) => (
                     <View style={styles.mediaItem}>
-                      <Image source={{ uri: item.url }} style={styles.mediaPreview} />
+                      <Image
+                        source={{ uri: typeof item === "string" ? item : (item?.url ?? item?.uri) }}
+                        style={styles.mediaPreview}
+                      />
                       <TouchableOpacity 
                         style={styles.removeButton} 
                         onPress={() => removeMedia(index, 'image')}
@@ -471,7 +564,7 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
               )}
             </View>
 
-            {/* Video Portfolio */}
+            {/* Video Portfolio 
             <View style={styles.portfolioSection}>
               <View style={styles.portfolioHeader}>
                 <Text style={styles.portfolioTitle}>🎥 Video dei tuoi lavori ({userData?.portfolioVideos?.length || 0})</Text>
@@ -513,9 +606,10 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
                 </Text>
               )}
             </View>
+            */}
           </View>
 
-          {/* Listino Prezzi */}
+          {/* Listino Prezzi 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>💰 Listino Prezzi ({userData?.listinoPrezzo?.length || 0})</Text>
@@ -557,9 +651,9 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
                 Nessun servizio nel listino. Aggiungi i tuoi servizi con i prezzi!
               </Text>
             )}
-          </View>
+          </View>*/}
 
-          {/* Promozione */}
+          {/* Promozione 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Promuovi il tuo salone</Text>
             
@@ -575,10 +669,11 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
               <Text style={styles.actionButtonText}>🎯 Crea offerte speciali</Text>
             </TouchableOpacity>
           </View>
+          */}
 
           {/* Logout */}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>🚪 Disconnetti</Text>
+            <Text style={styles.logoutButtonText}> Disconnetti</Text>
           </TouchableOpacity>
 
         </View>
@@ -641,7 +736,7 @@ export default function BarberAccountScreen({ userData: propUserData, onLogout, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#ffffffff',
   },
   scrollView: {
     flex: 1,
@@ -660,15 +755,133 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: 'white',
-    borderRadius: 15,
+    borderRadius: 0,
     padding: 25,
     marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#ffffffff',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginRight: 15,
+  },
+  profileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#F0F0F0',
+  },
+  profileImagePlaceholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(0, 188, 212, 0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  profileImagePlaceholderText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  addImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 188, 212, 0.4)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  addImageButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    lineHeight: 18,
+  },
+  salonInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+  },
+  menuLine: {
+    width: 20,
+    height: 2,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    marginVertical: 2,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 44,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 18,
+    paddingVertical: 6,
+    minWidth: 180,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 2,
+  },
+  menuItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#EEE',
+    marginVertical: 4,
   },
   welcomeText: {
     fontSize: 20,
@@ -677,22 +890,22 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   salonName: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#00BCD4',
-    marginBottom: 5,
+    marginBottom: 3,
   },
   roleText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#666',
     fontWeight: '500',
   },
   section: {
     backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
+    borderRadius: 5,
+    padding: 5,
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: '#ffffffff',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -734,7 +947,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tag: {
-    backgroundColor: '#E8F8F5',
+    backgroundColor: '#ffffffff',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -747,27 +960,41 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionButton: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 10,
+    backgroundColor: 'rgba(0, 188, 212, 0.15)',
+    borderRadius: 16,
     padding: 15,
     marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00BCD4',
+    borderLeftWidth: 3,
+    borderLeftColor: 'rgba(0, 188, 212, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   actionButtonText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: '#00BCD4',
+    fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 15,
+    backgroundColor: 'rgba(255, 107, 107, 0.25)',
+    borderRadius: 18,
     padding: 18,
     alignItems: 'center',
     marginTop: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
   logoutButtonText: {
-    color: 'white',
+    color: '#FF6B6B',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -787,16 +1014,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   addButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.3)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   addButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: 'rgba(200, 200, 200, 0.2)',
+    borderColor: 'rgba(200, 200, 200, 0.3)',
   },
   addButtonText: {
-    color: 'white',
+    color: '#00BCD4',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -893,27 +1128,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   editServiceButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: 'rgba(33, 150, 243, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.2,
+    borderColor: 'rgba(33, 150, 243, 0.5)',
   },
   editServiceText: {
     fontSize: 14,
   },
   removeServiceButton: {
-    backgroundColor: '#FF5252',
+    backgroundColor: 'rgba(255, 82, 82, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 82, 82, 0.5)',
   },
   removeServiceText: {
-    color: '#fff',
+    color: '#FF5252',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -925,12 +1164,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
     padding: 25,
     margin: 20,
     width: '90%',
     maxWidth: 400,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalTitle: {
     fontSize: 20,
@@ -947,13 +1193,13 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   textInput: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 10,
+    backgroundColor: 'rgba(248, 248, 248, 0.6)',
+    borderRadius: 14,
     padding: 15,
     fontSize: 16,
     color: '#000',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.2)',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -968,12 +1214,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: 'rgba(245, 245, 245, 0.6)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.3)',
   },
   confirmButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: 'rgba(0, 188, 212, 0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 188, 212, 0.7)',
   },
   cancelButtonText: {
     fontSize: 16,
@@ -983,6 +1231,6 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#00BCD4',
   },
 });

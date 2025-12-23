@@ -10,7 +10,7 @@ import {
 const logoHome = require('../assets/icons8-casa-256.png');
 const logoLikeB = require('../assets/icons8-cuore-48.png');
 const logoSearch = require('../assets/icons8-ricerca-480.png'); // Riutilizziamo questa icona per search
-const logogift = require('../assets/gift-96.png');
+const logobag = require('../assets/icons8-borsa-della-spesa-96.png');
 const logoAccount = require('../assets/icons8-user-96.png');
 
 // Componente Bottom Navigation
@@ -24,13 +24,13 @@ const BottomNavigation = ({ activeTab, setActiveTab }) => (
       <Image source={logoLikeB} style={[styles.logoIcon, { tintColor: activeTab === 'like' ? '#00BCD4' : '#000' }]} />
       <Text style={activeTab === 'like' ? styles.navLabelActive : styles.navLabel}>Like</Text>
     </TouchableOpacity>
-    <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('search')}>
+   {/*  <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('search')}>
       <Image source={logoSearch} style={[styles.logoIcon, { tintColor: activeTab === 'search' ? '#00BCD4' : '#000' }]} />
-      <Text style={activeTab === 'search' ? styles.navLabelActive : styles.navLabel}>Cerca</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('gift')}>
-      <Image source={logogift} style={[styles.logoIcon, { tintColor: activeTab === 'gift' ? '#00BCD4' : '#000' }]} />
-      <Text style={activeTab === 'gift' ? styles.navLabelActive : styles.navLabel}>Gift</Text>
+      <Text style={activeTab === 'search' ? styles.navLabelActive : styles.navLabel}>Cerca</Text> 
+    </TouchableOpacity> */}
+    <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('shop')}>
+      <Image source={logobag} style={[styles.logoIcon, { tintColor: activeTab === 'shop' ? '#00BCD4' : '#000' }]} />
+      <Text style={activeTab === 'shop' ? styles.navLabelActive : styles.navLabel}>Shop</Text> 
     </TouchableOpacity>
     <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('account')}>
       <Image source={logoAccount} style={[styles.logoIcon, { tintColor: activeTab === 'account' ? '#00BCD4' : '#000' }]} />

@@ -5,6 +5,7 @@ import {
   View,
   SafeAreaView
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 
 const Header = () => {
   return (
@@ -18,14 +19,15 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffff',
   },
   headerContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderRadius: 25,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#fffefeff',
     alignItems: 'center',
   },
   headerTitle: {

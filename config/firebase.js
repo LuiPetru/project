@@ -5,14 +5,19 @@ import { getStorage } from 'firebase/storage';
 import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configurazione Firebase
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCADFHu49TRAfrqfTasCFyDwwrfLgtXYGU",
-  authDomain: "aircut-a3107.firebaseapp.com",
-  projectId: "aircut-a3107",
-  storageBucket: "aircut-a3107.appspot.com",
-  messagingSenderId: "747155322651",
-  appId: "1:747155322651:web:36b46c282240959b9585be"
+  apiKey: "AIzaSyCg1uSisgI7vYmjd6Rt_M2mvKCH-ZDomzg",
+  authDomain: "aircut-9f140.firebaseapp.com",
+  projectId: "aircut-9f140",
+  storageBucket: "aircut-9f140.firebasestorage.app",
+  messagingSenderId: "218482899265",
+  appId: "1:218482899265:web:c07bc8985fdf863aad89c0",
+  measurementId: "G-F9YBCTZPN7"
 };
 
 // Inizializza Firebase app

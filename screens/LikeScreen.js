@@ -17,7 +17,7 @@ import { db } from '../config/firebase';
 
 const logoLike = require('../assets/icons8-cuore-48.png');
 const { width } = Dimensions.get('window');
-const itemSize = (width - 48) / 2; // 2 colonne con margini
+const itemSize = width - 48; // 1 colonna fullwidth
 
 const LikeScreen = () => {
   const [likedPosts, setLikedPosts] = useState([]);
@@ -134,15 +134,12 @@ const LikeScreen = () => {
         <Text style={styles.barberName} numberOfLines={1}>
           {item.barberName || 'Parrucchiere'}
         </Text>
-        <Text style={styles.likedDate} numberOfLines={1}>
-          {item.likedAt ? new Date(item.likedAt).toLocaleDateString() : 'Data non disponibile'}
-        </Text>
       </View>
       <TouchableOpacity 
         style={styles.unlikeButton}
         onPress={() => handleRemoveLike(item.postId)}
       >
-        <Text style={styles.unlikeText}>💔</Text>
+        <Text style={styles.unlikeText}>✕</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -180,7 +177,7 @@ const LikeScreen = () => {
         data={likedPosts}
         renderItem={renderLikedPost}
         keyExtractor={(item) => item.postId}
-        numColumns={2}
+        numColumns={1}
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
       />
@@ -191,7 +188,7 @@ const LikeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   loadingContainer: {
     flex: 1,
@@ -215,8 +212,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    shadowColor: '#00BCD4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerTitle: {
     fontSize: 20,
@@ -234,21 +240,23 @@ const styles = StyleSheet.create({
     width: itemSize,
     marginRight: 16,
     marginBottom: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
     overflow: 'hidden',
   },
   postImage: {
     width: '100%',
-    height: itemSize,
+    height: 350,
     backgroundColor: '#f0f0f0',
   },
   postInfo: {
@@ -258,26 +266,31 @@ const styles = StyleSheet.create({
   barberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
+    color: '#00BCD4',
     marginBottom: 2,
-  },
-  likedDate: {
-    fontSize: 12,
-    color: '#666',
   },
   unlikeButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    width: 32,
-    height: 32,
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 82, 82, 0.3)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#FF5252',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   unlikeText: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF5252',
   },
   emptyState: {
     alignItems: 'center',

@@ -17,7 +17,6 @@ const PostGrid = ({ posts, onPostPress }) => {
   if (!posts || posts.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyIcon}>📷</Text>
         <Text style={styles.emptyTitle}>Nessun post trovato</Text>
         <Text style={styles.emptyDescription}>
           Prova a cercare un hashtag diverso

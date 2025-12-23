@@ -315,10 +315,12 @@ export const getUserByName = async (username) => {
 // Registrazione Cliente
 export const registerClient = async (userData) => {
   try {
-    // Verifica unicità del nome utente
-    const isUnique = await checkUsernameUniqueness(userData.nomeUtente);
-    if (!isUnique) {
-      throw new Error('Nome utente già esistente. Scegli un nome diverso.');
+    // Verifica unicità del nome utente (solo se fornito)
+    if (userData.nomeUtente) {
+      const isUnique = await checkUsernameUniqueness(userData.nomeUtente);
+      if (!isUnique) {
+        throw new Error('Nome utente già esistente. Scegli un nome diverso.');
+      }
     }
 
     // Crea account Firebase Auth
@@ -328,19 +330,23 @@ export const registerClient = async (userData) => {
       userData.password
     );
 
-    // Salva dati specifici del cliente in Firestore
-    await setDoc(doc(db, 'clients', user.uid), {
-      email: userData.email,
-      sesso: userData.sesso,
-      eta: userData.eta,
-      via: userData.via,
-      nomeUtente: userData.nomeUtente,
-      preferenzaTaglio: userData.preferenzaTaglio, // array
-      raggio: userData.raggio,
+    // Costruisci l'oggetto con SOLO i campi forniti
+    const clientData = {
       role: 'client',
       roleCode: 0, // 0 per client
       createdAt: new Date().toISOString(),
-    });
+    };
+
+    // Aggiungi solo i campi che sono stati forniti (non undefined)
+    if (userData.email) clientData.email = userData.email;
+    if (userData.sesso) clientData.sesso = userData.sesso;
+    if (userData.nomeUtente) clientData.nomeUtente = userData.nomeUtente;
+    if (userData.preferenzaTaglio && userData.preferenzaTaglio.length > 0) {
+      clientData.preferenzaTaglio = userData.preferenzaTaglio;
+    }
+
+    // Salva dati specifici del cliente in Firestore
+    await setDoc(doc(db, 'clients', user.uid), clientData);
 
     return { user, role: 'client' };
   } catch (error) {
@@ -679,6 +685,11 @@ export const getAllBarberPosts = async () => {
           // Continua con likes vuoti se c'è un errore
         }
         
+        // Determina avatar: preferisci immagine profilo, altrimenti prima foto del portfolio
+        const firstPortfolio = barberData.portfolioImages?.[0];
+        const firstPortfolioUrl = typeof firstPortfolio === 'string' ? firstPortfolio : (firstPortfolio?.url || null);
+        const avatarUrl = barberData.profileImage || firstPortfolioUrl || null;
+
         barberData.portfolioImages.forEach((imageUrl, index) => {
           console.log(`getAllBarberPosts: Adding image post ${index} for ${barberId}:`, imageUrl);
           
@@ -693,7 +704,7 @@ export const getAllBarberPosts = async () => {
             barberId: barberId,
             salonName: barberData.nomeSalone || 'Salone',
             barberName: barberData.nomiDipendenti?.[0] || 'Parrucchiere',
-            avatar: barberData.portfolioImages[0] || null, // Prima foto come avatar
+            avatar: avatarUrl,
             postImage: finalImageUrl,
             image: finalImageUrl, // Per compatibilità con BarberPost
             mainImage: finalImageUrl,
@@ -719,6 +730,11 @@ export const getAllBarberPosts = async () => {
         console.log(`getAllBarberPosts: Processing ${barberData.portfolioVideos.length} videos for ${barberId}`);
         
         // Per ora i video non hanno sistema di like, quindi usiamo 0
+        // Determina avatar: preferisci immagine profilo, altrimenti prima foto del portfolio
+        const firstPortfolio = barberData.portfolioImages?.[0];
+        const firstPortfolioUrl = typeof firstPortfolio === 'string' ? firstPortfolio : (firstPortfolio?.url || null);
+        const avatarUrl = barberData.profileImage || firstPortfolioUrl || null;
+
         barberData.portfolioVideos.forEach((videoUrl, index) => {
           console.log(`getAllBarberPosts: Adding video post ${index} for ${barberId}:`, videoUrl);
           
@@ -730,7 +746,7 @@ export const getAllBarberPosts = async () => {
             barberId: barberId,
             salonName: barberData.nomeSalone || 'Salone',
             barberName: barberData.nomiDipendenti?.[0] || 'Parrucchiere',
-            avatar: barberData.portfolioImages?.[0] || null,
+            avatar: avatarUrl,
             postImage: finalVideoUrl, // Per i video usiamo l'URL come immagine temporanea
             image: finalVideoUrl,
             mainImage: finalVideoUrl,
@@ -890,7 +906,7 @@ export const searchBarbersByName = async (searchText) => {
 };
 
 // Ricerca intelligente combinata
-export const smartSearch = async (searchText) => {
+export const smartSearch = async (searchText, excludeUserId = null) => {
   try {
     console.log('smartSearch: Searching for:', searchText);
     
@@ -908,7 +924,15 @@ export const smartSearch = async (searchText) => {
       // Ricerca per nome barbiere/salone
       const barbers = await searchBarbersByName(trimmedText);
       console.log('smartSearch: Barbers found:', barbers.length);
-      return { type: 'barbers', searchText: trimmedText, posts: [], users: barbers };
+      
+      // Filtra per escludere l'utente corrente (non mostrare se stesso)
+      let filteredBarbers = barbers;
+      if (excludeUserId) {
+        filteredBarbers = barbers.filter(barber => barber.id !== excludeUserId);
+        console.log('smartSearch: Filtered barbers (excluding self):', filteredBarbers.length);
+      }
+      
+      return { type: 'barbers', searchText: trimmedText, posts: [], users: filteredBarbers };
     }
   } catch (error) {
     console.error('Errore ricerca intelligente:', error);

@@ -45,7 +45,7 @@ export default function RoleSelectionScreen({ onRoleSelected }) {
         {/* Logo/Brand */}
         <View style={styles.brandContainer}>
           <Text style={styles.brandText}>aircut</Text>
-          <Text style={styles.subtitle}>Scegli come vuoi utilizzare l'app</Text>
+          <Text style={styles.subtitle}></Text>
         </View>
 
         {/* Role Cards */}
@@ -62,11 +62,10 @@ export default function RoleSelectionScreen({ onRoleSelected }) {
               activeOpacity={0.8}
             >
               <View style={styles.cardContent}>
-                <Text style={styles.cardEmoji}>✂️</Text>
+                <Text style={styles.cardEmoji}>💇</Text>
                 <Text style={styles.cardTitle}>Cliente</Text>
                 <Text style={styles.cardDescription}>
-                  Prenota il tuo taglio{'\n'}
-                  Scopri i migliori parrucchieri
+                  Scopri i migliori Hair Artist
                 </Text>
               </View>
             </TouchableOpacity>
@@ -83,10 +82,9 @@ export default function RoleSelectionScreen({ onRoleSelected }) {
               activeOpacity={0.8}
             >
               <View style={styles.cardContent}>
-                <Text style={styles.cardEmoji}>💼</Text>
-                <Text style={styles.cardTitle}>Parrucchiere</Text>
+                <Text style={styles.cardEmoji}>✂️</Text>
+                <Text style={styles.cardTitle}>Hair Artist</Text>
                 <Text style={styles.cardDescription}>
-                  Gestisci il tuo salone{'\n'}
                   Trova nuovi clienti
                 </Text>
               </View>
@@ -95,12 +93,7 @@ export default function RoleSelectionScreen({ onRoleSelected }) {
 
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Potrai sempre cambiare questa impostazione
-          </Text>
-        </View>
+        
 
       </View>
     </SafeAreaView>
@@ -110,7 +103,7 @@ export default function RoleSelectionScreen({ onRoleSelected }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#ffffff',
   },
   content: {
     flex: 1,
@@ -130,37 +123,38 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#334155',
     textAlign: 'center',
-    fontWeight: '300',
+    fontWeight: '500',
   },
   cardsContainer: {
     flex: 1,
-    justifyContent: 'center',
-    paddingVertical: 50,
+    justifyContent: 'flex-start',
+    paddingVertical: 20,
+    marginTop: 30,
   },
   card: {
     marginVertical: 15,
   },
   cardButton: {
-    backgroundColor: 'white',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.78)',
+    borderRadius: 24,
     padding: 30,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 5,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
   },
   cardButtonSelected: {
-    borderColor: '#00BCD4',
-    backgroundColor: '#F0FDFF',
+    borderColor: 'rgba(0, 188, 212, 0.5)',
+    backgroundColor: 'rgba(0, 188, 212, 0.15)',
   },
   cardContent: {
     alignItems: 'center',
@@ -172,15 +166,15 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#333',
+    color: '#0f172a',
     marginBottom: 10,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#334155',
     textAlign: 'center',
     lineHeight: 20,
-    fontWeight: '300',
+    fontWeight: '500',
   },
   footer: {
     alignItems: 'center',
@@ -188,8 +182,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#999',
+    color: '#64748b',
     textAlign: 'center',
-    fontWeight: '300',
+    fontWeight: '400',
   },
 });

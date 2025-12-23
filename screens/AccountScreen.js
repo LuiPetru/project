@@ -50,7 +50,7 @@ const AccountScreen = ({ onLogout }) => {
           style={styles.logoutButton} 
           onPress={handleLogout}
         >
-          <Text style={styles.logoutText}>🚪 Disconnetti</Text>
+          <Text style={styles.logoutText}> Disconnetti</Text>
         </TouchableOpacity>
         
         <Text style={styles.debugText}>
